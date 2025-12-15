@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -49,6 +50,7 @@ import gregtech.api.gui.modularui.GTUITextures;
 import gregtech.api.objects.ItemData;
 import gregtech.api.recipe.maps.AssemblerBackend;
 import gregtech.api.recipe.maps.AssemblyLineFrontend;
+import gregtech.api.recipe.maps.CauldronFrontend;
 import gregtech.api.recipe.maps.DistillationTowerFrontend;
 import gregtech.api.recipe.maps.EFRBlastingBackend;
 import gregtech.api.recipe.maps.EFRSmokingBackend;
@@ -638,6 +640,10 @@ public final class RecipeMaps {
         .frontend(SpaceProjectFrontend::new)
         .disableRenderRealStackSizes()
         .build();
+    public static final RecipeMap<RecipeMapBackend> cokeOvenRecipes = RecipeMapBuilder.of("gt.recipe.cokeoven")
+        .maxIO(1, 1, 0, 1)
+        .minInputs(1, 0)
+        .build();
     /**
      * Uses {@link GTRecipeConstants#ADDITIVE_AMOUNT} for coal/charcoal amount.
      */
@@ -681,11 +687,11 @@ public final class RecipeMaps {
             for (Materials coal : new Materials[] { Materials.Coal, Materials.Charcoal }) {
                 coll.derive()
                     .setInputs(aInput1, aInput2, coal.getGems(aCoalAmount))
-                    .setOutputs(aOutput1, aOutput2, Materials.DarkAsh.getDust(aDustAmount))
+                    .setOutputs(aOutput1, aOutput2, Materials.AshDark.getDust(aDustAmount))
                     .setChances(coalChances);
                 coll.derive()
                     .setInputs(aInput1, aInput2, coal.getDust(aCoalAmount))
-                    .setOutputs(aOutput1, aOutput2, Materials.DarkAsh.getDust(aDustAmount))
+                    .setOutputs(aOutput1, aOutput2, Materials.AshDark.getDust(aDustAmount))
                     .setChances(coalChances);
             }
             int aDuration = builder.getDuration();
@@ -739,7 +745,7 @@ public final class RecipeMaps {
                 for (Materials coal : new Materials[] { Materials.Coal, Materials.Charcoal }) {
                     coll.derive()
                         .setInputs(aInput1, aInput2, coal.getBlocks(aCoalAmount))
-                        .setOutputs(aOutput1, aOutput2, Materials.DarkAsh.getDust(aCoalAmount))
+                        .setOutputs(aOutput1, aOutput2, Materials.AshDark.getDust(aCoalAmount))
                         .setDuration(aDuration * 10);
                 }
                 if (Railcraft.isModLoaded()) {
@@ -1307,4 +1313,29 @@ public final class RecipeMaps {
         .progressBar(GTUITextures.PROGRESSBAR_ARROW)
         .frontend(IsotopeDecayFrontend::new)
         .build();
+    public static final RecipeMap<RecipeMapBackend> cableRecipes = RecipeMapBuilder
+        .of("gt.recipe.cable", RecipeMapBackend::new)
+        .maxIO(6, 1, 1, 0)
+        .minInputs(1, 1)
+        .progressBar(GTUITextures.PROGRESSBAR_ARROW)
+        .build();
+    public static final RecipeMap<RecipeMapBackend> cauldronRecipe = RecipeMapBuilder
+        .of("gt.recipe.cauldron", RecipeMapBackend::new)
+        .maxIO(1, 1, 1, 0)
+        .minInputs(1, 1)
+        .progressBar(GTUITextures.PROGRESSBAR_ARROW)
+        .neiRecipeBackgroundOffset(7, 0)
+        .neiRecipeBackgroundSize(165, 60)
+        .logoPos(150, 38)
+        .frontend(CauldronFrontend::new)
+        .neiHandlerInfo(builder -> {
+            builder.setWidth(170);
+            builder.setHeight(60);
+            builder.setDisplayStack(new ItemStack(Items.cauldron));
+            builder.setShowFavoritesButton(false);
+            builder.setShowOverlayButton(false);
+            return builder;
+        })
+        .build();
+
 }

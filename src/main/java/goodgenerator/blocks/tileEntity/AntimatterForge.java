@@ -30,12 +30,6 @@ import com.gtnewhorizon.structurelib.alignment.constructable.ISurvivalConstructa
 import com.gtnewhorizon.structurelib.structure.IStructureDefinition;
 import com.gtnewhorizon.structurelib.structure.ISurvivalBuildEnvironment;
 import com.gtnewhorizon.structurelib.structure.StructureDefinition;
-import com.gtnewhorizons.modularui.api.NumberFormatMUI;
-import com.gtnewhorizons.modularui.api.math.Alignment;
-import com.gtnewhorizons.modularui.common.widget.DynamicPositionedColumn;
-import com.gtnewhorizons.modularui.common.widget.FakeSyncWidget;
-import com.gtnewhorizons.modularui.common.widget.SlotWidget;
-import com.gtnewhorizons.modularui.common.widget.TextWidget;
 
 import goodgenerator.blocks.structures.AntimatterStructures;
 import goodgenerator.blocks.tileEntity.render.TileAntimatter;
@@ -63,6 +57,7 @@ import gregtech.api.util.HatchElementBuilder;
 import gregtech.api.util.MultiblockTooltipBuilder;
 import gregtech.api.util.shutdown.ShutDownReason;
 import gregtech.api.util.shutdown.ShutDownReasonRegistry;
+import gregtech.common.gui.modularui.multiblock.AntimatterForgeGui;
 import gregtech.common.tileentities.machines.IDualInputHatch;
 
 public class AntimatterForge extends MTEExtendedPowerMultiBlockBase<AntimatterForge>
@@ -73,7 +68,7 @@ public class AntimatterForge extends MTEExtendedPowerMultiBlockBase<AntimatterFo
     private static final FluidStack[] gravityUpgrades = { Materials.SpaceTime.getMolten(1L),
         Materials.Space.getMolten(1L), Materials.Eternity.getMolten(1L) };
     private static final FluidStack[] containmentUpgrades = { GGMaterial.shirabon.getMolten(1),
-        Materials.MagnetohydrodynamicallyConstrainedStarMatter.getMolten(1L) };
+        Materials.MHDCSM.getMolten(1L) };
     private static final FluidStack[] activationUpgrades = { GGMaterial.naquadahBasedFuelMkVDepleted.getFluidOrGas(1),
         GGMaterial.naquadahBasedFuelMkVIDepleted.getFluidOrGas(1) };
 
@@ -212,7 +207,7 @@ public class AntimatterForge extends MTEExtendedPowerMultiBlockBase<AntimatterFo
             .addInfo("Cycles every second")
             .addInfo("Every cycle, the lowest amount of antimatter in the 16 antimatter hatches is recorded")
             .addInfo(
-                "All hatches with more than the lowest amount will " + EnumChatFormatting.RED
+                "All hatches with more than the lowest amount " + EnumChatFormatting.RED
                     + "lose half the difference!"
                     + EnumChatFormatting.GRAY)
             .addInfo(
@@ -233,7 +228,7 @@ public class AntimatterForge extends MTEExtendedPowerMultiBlockBase<AntimatterFo
                     + EnumChatFormatting.RESET
                     + EnumChatFormatting.GRAY
                     + ")) of antimatter each cycle")
-            .addInfo("Each hatch will multiply the base production per hatch with a random number pulled from")
+            .addInfo("Each hatch multiplies the base production per hatch with a random number pulled from")
             .addInfo(
                 "a normal distribution with a mean of " + baseSkew
                     + " + "
@@ -247,6 +242,7 @@ public class AntimatterForge extends MTEExtendedPowerMultiBlockBase<AntimatterFo
             .addInfo("The total gain of antimatter can be negative!")
             .addSeparator()
             .addInfo("Can be supplied with stabilization fluids to improve antimatter generation")
+            .addInfo("Each stabilization can only use one of the fluids at a time")
             .addInfo(
                 "" + EnumChatFormatting.GREEN
                     + EnumChatFormatting.BOLD
@@ -314,7 +310,6 @@ public class AntimatterForge extends MTEExtendedPowerMultiBlockBase<AntimatterFo
                     + "^(1/3) L of fluid per cycle)")
             .addInfo("1. Depleted Naquadah Fuel Mk V = " + EnumChatFormatting.AQUA + "0.05" + EnumChatFormatting.GRAY)
             .addInfo("2. Depleted Naquadah Fuel Mk VI = " + EnumChatFormatting.AQUA + "0.10" + EnumChatFormatting.GRAY)
-            .addInfo("Each stabilization can only use one of the fluids at a time")
             .beginStructureBlock(53, 53, 47, false)
             .addCasingInfoMin("Antimatter Containment Casing", 512, false)
             .addCasingInfoMin("Magnetic Flux Casing", 2274, false)
@@ -770,82 +765,35 @@ public class AntimatterForge extends MTEExtendedPowerMultiBlockBase<AntimatterFo
                 + " L" };
     }
 
-    private long getAntimatterAmount() {
+    public long getAntimatterAmount() {
         return this.guiAntimatterAmount;
     }
 
-    private long getPassiveConsumption() {
+    public long getPassiveConsumption() {
         return this.guiPassiveEnergy;
     }
 
-    private long getActiveConsumption() {
+    public long getActiveConsumption() {
         return this.guiActiveEnergy / 20;
     }
 
-    private long getAntimatterChange() {
+    public long getAntimatterChange() {
         return this.guiAntimatterChange;
     }
 
-    protected long antimatterAmountCache;
-    protected long passiveCostCache;
-    protected long activeCostCache;
-    protected long antimatterChangeCache;
-    protected static final NumberFormatMUI numberFormat = new NumberFormatMUI();
-
     @Override
-    protected boolean useMui2() {
+    public boolean supportsLogo() {
         return false;
     }
 
     @Override
-    protected void drawTexts(DynamicPositionedColumn screenElements, SlotWidget inventorySlot) {
-        super.drawTexts(screenElements, inventorySlot);
+    protected @NotNull AntimatterForgeGui getGui() {
+        return new AntimatterForgeGui(this);
+    }
 
-        screenElements
-            .widget(
-                new TextWidget()
-                    .setStringSupplier(
-                        () -> StatCollector.translateToLocal("gui.AntimatterForge.0") + ": "
-                            + EnumChatFormatting.BLUE
-                            + numberFormat.format(antimatterAmountCache)
-                            + EnumChatFormatting.WHITE
-                            + " L")
-                    .setTextAlignment(Alignment.CenterLeft)
-                    .setDefaultColor(COLOR_TEXT_WHITE.get()))
-            .widget(new FakeSyncWidget.LongSyncer(this::getAntimatterAmount, val -> antimatterAmountCache = val))
-            .widget(
-                new TextWidget()
-                    .setStringSupplier(
-                        () -> StatCollector.translateToLocal("gui.AntimatterForge.1") + ": "
-                            + EnumChatFormatting.RED
-                            + GTUtility.scientificFormat(passiveCostCache)
-                            + EnumChatFormatting.WHITE
-                            + " EU/t")
-                    .setTextAlignment(Alignment.CenterLeft)
-                    .setDefaultColor(COLOR_TEXT_WHITE.get()))
-            .widget(new FakeSyncWidget.LongSyncer(this::getPassiveConsumption, val -> passiveCostCache = val))
-            .widget(
-                new TextWidget()
-                    .setStringSupplier(
-                        () -> StatCollector.translateToLocal("gui.AntimatterForge.2") + ": "
-                            + EnumChatFormatting.LIGHT_PURPLE
-                            + GTUtility.scientificFormat(activeCostCache)
-                            + EnumChatFormatting.WHITE
-                            + " EU/t")
-                    .setTextAlignment(Alignment.CenterLeft)
-                    .setDefaultColor(COLOR_TEXT_WHITE.get()))
-            .widget(new FakeSyncWidget.LongSyncer(this::getActiveConsumption, val -> activeCostCache = val))
-            .widget(
-                new TextWidget()
-                    .setStringSupplier(
-                        () -> StatCollector.translateToLocal("gui.AntimatterForge.3") + ": "
-                            + EnumChatFormatting.AQUA
-                            + numberFormat.format(antimatterChangeCache)
-                            + EnumChatFormatting.WHITE
-                            + " L")
-                    .setTextAlignment(Alignment.CenterLeft)
-                    .setDefaultColor(COLOR_TEXT_WHITE.get()))
-            .widget(new FakeSyncWidget.LongSyncer(this::getAntimatterChange, val -> antimatterChangeCache = val));
+    @Override
+    public boolean canBeMuffled() {
+        return false;
     }
 
     @Override

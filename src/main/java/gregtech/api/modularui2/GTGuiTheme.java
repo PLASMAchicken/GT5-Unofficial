@@ -14,6 +14,7 @@ import com.cleanroommc.modularui.utils.JsonArrayBuilder;
 import com.cleanroommc.modularui.utils.JsonBuilder;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import gregtech.api.enums.Dyes;
 
 /**
  * Theme object gets applied to the entire panel. If you want to customize the appearance of specific widget, see
@@ -402,6 +403,11 @@ public class GTGuiTheme {
             return this;
         }
 
+        public Builder themedColor(String themeId, int color) {
+            theme.elementBuilder.add(b -> b.add(themeId, new JsonBuilder().add("color", color)));
+            return this;
+        }
+
         /**
          * Registers texture which can be changed depending on theme.
          *
@@ -534,6 +540,18 @@ public class GTGuiTheme {
                             new JsonBuilder().add("type", "texture")
                                 .add("id", fullTextureId))
                         .add("imageSize", imageSize)));
+            return this;
+        }
+
+        /**
+         * A shorthand for applying a Dye to every (non-text) part of the UI theme
+         * 
+         * @param dye - dye to apply
+         * @return this
+         */
+        public Builder fullColor(Dyes dye) {
+            this.color(dye.toInt())
+                .simpleToggleButton(GTTextureIds.BUTTON_STANDARD, GTTextureIds.BUTTON_STANDARD_PRESSED, dye.toInt());
             return this;
         }
 
