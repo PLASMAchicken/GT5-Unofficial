@@ -1,2 +1,5 @@
 queue_rules:
   - name: Test
+    queue_conditions:
+      - and:
+          - label = test
