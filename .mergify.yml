@@ -3,3 +3,4 @@ queue_rules:
     queue_conditions:
       - and:
           - label = test
+    autoqueue: true
